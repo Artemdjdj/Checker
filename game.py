@@ -35,6 +35,12 @@ class Move:
         self.parent_col = None
         self.row = None
         self.col = None
+        
+    def set_el(self, parent_row, parent_col, row, col):
+        self.parent_row = parent_row
+        self.parent_col = parent_col
+        self.row = row
+        self.col = col
 
     def get_el(self, parent_r, parent_c, r, c):
         self.parent_row = parent_r

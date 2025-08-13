@@ -293,7 +293,7 @@ class MainWindow(QMainWindow):
                 j = temp[-1]
                 name_of_btn = f"button_{i}{j}"
                 btn = self.get_button_by_name(name_of_btn)
-                btn.setIcon(QIcon(resource_path((icon_of_red_dot))))
+                btn.setIcon(QIcon(resource_path(icon_of_red_dot)))
                 btn.setIconSize(QSize(10,10))
                 self.list_buttons.append(btn)
 
@@ -611,91 +611,172 @@ class MainWindow(QMainWindow):
         return False 
     
     # Отображение всего пути взятий
-    def get_real_more_important_ways(self):
+    def get_real_more_important_ways(self,more_importan_ways):
         stack = []
-        check_is_qeen = self.board[self.parent_r][self.parent_c].isqeen
-        if check_is_qeen:
-            self.result.clear()
-            if self.pos_which_can_cut_figure(self.more_important_ways, self.result, self.type_of_figure): 
-                self.more_important_ways.clear()
-                for i in self.result:
-                    self.more_important_ways.append(i)
-        # print("self.more_important_ways:\n")
-        # print(self.more_important_ways)
-        for el in self.more_important_ways:
-            stack.append(el)
         visited = []
-        new_arr_of_more_important_ways = []
-        negative_type_of_figure = "white" if self.type_of_figure=="black" else "black"
-        for el in self.more_important_ways:
-            new_arr_of_more_important_ways.append(el)
-        while(len(stack)!=0):
-            new_more_important_ways =[]
-            ways = []
-            position= stack.pop()
-            visited.append(position)
-            nerow = -1
-            necol = -1
-            if check_is_qeen:
-                arr = []
-                arr = self.find_cut_figure(self.parent_r, self.parent_c, position[0], position[1])
-                if arr != None:
-                    nerow = arr[0]
-                    necol = arr[1]
-            
-            self.get_all_ways(position[0], position[1], ways, new_more_important_ways,self.board[self.parent_r][self.parent_c].isqeen, self.board[self.parent_r][self.parent_c].type_of_figure, nerow, necol)
-            if check_is_qeen:
-                self.result.clear()
-                if self.pos_which_can_cut_figure(new_more_important_ways, self.result, self.type_of_figure): 
-                    new_more_important_ways.clear()
-                    for i in self.result:
-                        new_more_important_ways.append(i)
-            # print()
-            # print(new_more_important_ways)
-            # min_move = []
-            # min_val = 8
-            # for row, col in new_more_important_ways:
-            #     if (row< min_val):
-            #         min_val = row
-            #         min_move = [row, col]
-            # pos = position
-            # if min_val> position[0]:
-            #     res = min_move
-            #     min_move = pos
-            #     pos = res
-            # for line in self.all_lines:
-            #     if min_move in line and pos in line:
-            #         for pose in line:
-            #             if (min_move[0]< pose[0] < pos[0]) and self.board[pose[0]][pose[1]].type_of_figure == negative_type_of_figure:
-            #                 cut_figures.append(pose)
-            #        
-            #          self.board[pose[0]][pose[1]].type_of_figure = self.type_of_figure
+        result = []
+        cut_figures = []
+        result_arr = []
+        figure_qeen = []
+        parent_start_row = self.parent_r
+        parent_start_col = self.parent_c
+        special_type = ("white" if self.type_of_figure == "black" else "black")
+        for way in more_importan_ways:
+            stack.append([self.parent_r, self.parent_c, way[0], way[1]])
+        
+        # print("\n first")
+        # print(more_importan_ways)
 
-            if position not in new_arr_of_more_important_ways and len(new_more_important_ways)>0:
-                new_arr_of_more_important_ways.append(position)
-            if check_is_qeen:
-                for pos in self.cut_figures_fake:
-                    if pos not in self.cutt_figures:
-                        self.cutt_figures.append(pos)
-                        self.board[pos[0]][pos[1]].type_of_figure = None
-                        for el in new_more_important_ways:
-                            if el not in visited:
-                                stack.insert(0, el)
-                                if el not in new_arr_of_more_important_ways:
-                                    new_arr_of_more_important_ways.append(el)
+        while stack:
+            position = stack.pop()
+            # print("\n Position")
+            # print(position)
+            # print("\n new pos")
+            # print(position)
+            if position not in visited:
+                visited.append(position)
+                if [position[2], position[3]] not in result_arr:
+                    result_arr.append([position[2], position[3]])
             else:
-                for el in new_more_important_ways:
-                    if el not in visited:
-                        stack.insert(0, el)
-                        if el not in new_arr_of_more_important_ways:
-                            new_arr_of_more_important_ways.append(el)
-        # print("Сбиыте фигуры")   
-        # print(self.cutt_figures)
-        for pos in self.cutt_figures:
-            self.board[pos[0]][pos[1]].type_of_figure = negative_type_of_figure
-        # print("result\n")
-        # print(new_arr_of_more_important_ways)
-        return new_arr_of_more_important_ways
+                continue
+            parent_row = position[0]
+            parent_col = position[1]
+            row = position[2]
+            col = position[3]
+
+            parent_piece = self.board[parent_row][parent_col]
+            current_piece = self.board[row][col]
+
+            self.parent_r = parent_row
+            self.parent_c = parent_col
+            nerow = necol = -1
+            
+            is_figure_qeen = self.check_is_figure_qeen_new_function(row, col)
+            is_figure_qeen_parent = self.board[parent_row][parent_col].isqeen
+            result_qeen = is_figure_qeen_parent
+
+            if is_figure_qeen or is_figure_qeen_parent:
+                figure_qeen.append([row, col])
+                self.board[row][col].isqeen = True
+                result_qeen = True
+     
+            # print("\n is qeen parent")
+            # print(self.board[parent_row][parent_col].isqeen)
+            # print("\n is qeen")
+            # print(self.board[row][col].isqeen)
+            if result_qeen:
+                # print("Taking")
+                # print(parent_row, parent_col, row, col)
+                cut_way = self.find_cut_figure(parent_row, parent_col, row, col)   
+                # print(cut_way)
+                if cut_way:
+                    if cut_way not in cut_figures:
+                        cut_figures.append(cut_way)
+                        self.board[cut_way[0]][cut_way[1]].type_of_figure = self.type_of_figure
+                        # print("\ncut_pos")
+                        # print(cut_way)
+                        nerow = cut_way[0]
+                        necol = cut_way[1]
+                                
+            ways = []
+            new_more_important_ways = []
+             
+            self.get_all_ways(row, col, ways, new_more_important_ways, result_qeen, self.type_of_figure)
+
+            if result_qeen:
+                result.clear()
+                self.parent_r = row
+                self.parent_c = col
+                # print("\n old ways")
+                # print(new_more_important_ways)
+                if self.pos_which_can_cut_figure(new_more_important_ways, result, self.type_of_figure):
+                    new_more_important_ways.clear()
+                    for el in result:
+                        new_more_important_ways.append(el)
+                # print("\n new ways")
+                # print(new_more_important_ways)
+
+            for way in new_more_important_ways:
+                new_position = [row, col, way[0], way[1]]
+                if new_position not in visited:
+                    stack.insert(0, new_position)
+       
+        # print("\n take figure")
+        # print(cut_figures)
+        self.print_board()
+        for cut_pos in cut_figures:
+            self.board[cut_pos[0]][cut_pos[1]].type_of_figure = special_type
+
+        # print("\n Qeens_pos")
+        # print(figure_qeen)
+        # self.print_board()
+        for qeen in figure_qeen:
+            self.board[qeen[0]][qeen[1]].isqeen = False
+
+        self.parent_r = parent_start_row
+        self.parent_c = parent_start_col
+        # print("\n Result")
+        # print(result_arr)
+            
+        return  result_arr
+
+    # def get_real_more_important_ways(self):
+    #     stack = []
+    #     visited= []
+    #     result = []
+    #     cut_figures = []
+    #     result_arr_of_all_positions = []
+    #     # check_is_qeen = self.board[pos_row][pos_col].isqeen
+    #     type_of_figure_to_get_catch_figures = ("white" if self.board[self.parent_r][self.parent_c].type_of_figure =="black" else "black")
+        
+    #     if self.pos_which_can_cut_figure(self.parent_r, self.parent_c,self.more_important_ways, result,self.type_of_figure):
+    #         self.more_important_ways.clear()
+    #         for el in result:
+    #             self.more_important_ways.append(el)
+    #     print("\n first_ways\n")
+    #     print(self.more_important_ways)
+    #     for el in self.more_important_ways:
+    #         stack.append([self.parent_r, self.parent_c, el[0], el[1]])
+        
+    #     while stack:
+    #         position = stack.pop()
+    #         if position not in visited:
+    #             visited.append(position)
+            
+    #         cut_pos = self.find_cut_figure(position[0], position[1], position[2], position[3])
+    #         nerow = necol = -1
+    #         if cut_pos:
+    #             self.board[cut_pos[0]][cut_pos[1]].type_of_figure = None
+    #             cut_figures.append(cut_pos)
+    #             # print("\n позиции сбития \n")
+    #             # print(cut_pos)
+    #             nerow = cut_pos[0]
+    #             necol = cut_pos[1]
+
+    #         ways = []
+    #         more_important_ways = []
+    #         parent_piece = self.board[position[0]][position[1]]
+    #         self.get_all_ways(position[2], position[3], ways, more_important_ways, parent_piece.isqeen, parent_piece.type_of_figure, nerow, necol)
+
+    #         result.clear()
+    #         if self.pos_which_can_cut_figure(position[0], position[1],more_important_ways, result, self.type_of_figure):
+    #             more_important_ways.clear()
+    #             for el in result:
+    #                 more_important_ways.append(el)
+            
+    #         if [position[2], position[3]] not in result_arr_of_all_positions:
+    #             result_arr_of_all_positions.append([position[2], position[3]])
+            
+    #         for el in more_important_ways:
+    #             if [position[2], position[3], el[0], el[1]] not in visited:
+    #                 stack.insert(0,[position[2], position[3], el[0], el[1]])
+
+    #     # print("\n cut_pos \n")    
+    #     for cut_pos in  cut_figures:
+    #         self.board[cut_pos[0]][cut_pos[1]].type_of_figure = type_of_figure_to_get_catch_figures
+    #         # print(cut_pos)
+        
+    #     return result_arr_of_all_positions
     
     # Первая часть хода
     def choose_start_position(self, button = None, index_r = None, index_c = None):
@@ -725,15 +806,30 @@ class MainWindow(QMainWindow):
                 button.setStyleSheet(self.style_around_buttons)
             self.clear_red_dot()
             self.check_ways_to_cut_or_to_make_motion()
-            self.make_red_dot(self.get_real_more_important_ways())
+            # print("\n board")
+            # self.print_board()
+            self.make_red_dot(self.get_real_more_important_ways(self.more_important_ways))
+            # print("\n new board")
+            # self.print_board()
         else:
+            # print("position")
+            # print(index_of_row, index_of_col)
+            # print("\n parent position")
+            # print(self.parent_r, self.parent_c)
+            # print("\ntype")
+            # print(self.board[self.parent_r][self.parent_c].type_of_figure, self.type_of_figure)
             
             if self.parent_r == -1 or self.parent_c == -1 or self.board[self.parent_r][self.parent_c].type_of_figure != self.type_of_figure:
                 return
             list_buttons_that_must_to_cut_ohter = []
             self.get_buttons_that_should_cut_others(list_buttons_that_must_to_cut_ohter, self.type_of_figure)  
             self.check_ways_to_cut_or_to_make_motion() 
-            
+            # print("\ntype after checking motion ")
+            # print(self.board[self.parent_r][self.parent_c].type_of_figure, self.type_of_figure)
+            # print("\n Parent position")
+            # print(self.parent_r, self.parent_c)
+            # print("\n Possible moves \n")
+            # print(self.more_important_ways)
 
             # for temp in more_important_ways:
             #     name_of_btn = f"button_{temp[0]}{temp[-1]}"
@@ -876,7 +972,7 @@ class MainWindow(QMainWindow):
     def find_cut_figure(self, parent_row, parent_col, index_of_row, index_of_col):
         d_row = 1 if index_of_row > parent_row else -1
         d_col = 1 if index_of_col > parent_col else -1
-        cut_row, cut_col = parent_row, parent_col
+        cut_row, cut_col = None, None
         time_r, time_c = parent_row + d_row, parent_col + d_col               
         while (time_r, time_c) != (index_of_row, index_of_col) and 0 <= time_r < 8 and 0 <= time_c < 8:
             if self.board[time_r][time_c].type_of_figure is not None:
@@ -886,7 +982,7 @@ class MainWindow(QMainWindow):
                     return  None
             time_r += d_row
             time_c += d_col
-        return [cut_row, cut_col]
+        return [cut_row, cut_col] if cut_row else None
     
     # Функция для фиксации хода
     def make_notes_about_figure_which_make_the_motion(self, row_parent, col_parent, new_row, new_col, type_of_figure, time=False):
@@ -994,8 +1090,14 @@ class MainWindow(QMainWindow):
                     self.name_parent_button = name
                     self.parent_r = index_of_row
                     self.parent_c = index_of_col
+                    # print("\n parent:")
+                    # print(self.parent_r, self.parent_c)
+                    # print("\ntype_after taking")
+                    # print(self.board[self.parent_r][self.parent_c].type_of_figure, self.type_of_figure)
                     new_button.setStyleSheet(self.style_around_buttons)
                     self.check_ways_to_cut_or_to_make_motion()
+                    # print("\n more_important_ways")
+                    # print(self.more_important_ways)
                     # check_is_qeen = self.board[self.parent_r][self.parent_c].isqeen
                     # if check_is_qeen:
                     #     if self.pos_which_can_cut_figure(self.more_important_ways, self.result, self.board[self.parent_r][self.parent_c].type_of_figure): 
@@ -1004,7 +1106,11 @@ class MainWindow(QMainWindow):
                     #             self.more_important_ways.append(i)
                     self.clear_red_dot()
                     if not self.is_game_with_bot  or (self.is_game_with_bot and self.type_of_figure == "white"):
-                        self.make_red_dot(self.get_real_more_important_ways())
+                        self.make_red_dot(self.get_real_more_important_ways(self.more_important_ways))
+                        # print("\n parent2:")
+                        # print(self.parent_r, self.parent_c)
+                        # print("\ntype_after taking2")
+                        # print(self.board[self.parent_r][self.parent_c].type_of_figure, self.type_of_figure)
                     if self.is_game_with_bot  and self.type_of_figure =="black":
                         QTimer.singleShot(1000, lambda: self.play_checker_with_bot(index_of_row, index_of_col))
                     return
