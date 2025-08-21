@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
         self.icon_white = QIcon()
         self.icon_white.addFile(icon_white)
         self.icon_black = QIcon()
-        self.timer = QTimer(self)                                               
+        self.timer = QTimer()                                               
         self.timer.setInterval(1000)                             
         self.time = 60
         self.setWindowIcon(QIcon(resource_path("icons/icon_for_windows.png")))
@@ -160,7 +160,8 @@ class MainWindow(QMainWindow):
         self.ui.button_prev_motion.clicked.connect(lambda:self.get_prev())
         self.ui.button_return_this_position.clicked.connect(lambda:self.get_this_position())
         self.ui.push_button_play_game_with_bot.clicked.connect(lambda:self.start_game_for_bot())
-        # self.timer.timeout.connect(self.showTime)
+        if not self.is_game_with_bot:
+            self.timer.timeout.connect(self.showTime)
         self.ui.start_game_2_players.clicked.connect(lambda:self.start_game_for_2_players(True))
         for button in self.all_buttons:
             button.clicked.connect(lambda ch, b=button: self.choose_start_position(b))
@@ -217,7 +218,7 @@ class MainWindow(QMainWindow):
         # else:
         #     self.ui.label_time.setText("Ваш ход")
         self.ui.label_time.setText("")
-        self.timer.stop()
+        # self.timer.stop()
         self.parent_r = -1
         self.parent_c = -1
         self.ui.start_game_2_players.setEnabled(True)
@@ -230,6 +231,7 @@ class MainWindow(QMainWindow):
                 name = f"button_{i}{j}"
                 button = self.get_button_by_name(name)
                 button.setIcon(QIcon())
+                button.setIconSize(QSize(60,60))
         
         for i in range(0,3):
             if i%2 == 0: 
@@ -240,6 +242,7 @@ class MainWindow(QMainWindow):
                     name = f"button_{i}{j}"
                     button = self.get_button_by_name(name)
                     button.setIcon(self.icon_white)
+                    button.setIconSize(QSize(60,60))
                     # if j == 0 or j == 7:
                     #     self.board[i][j].isextreme = True
             else:
@@ -250,6 +253,7 @@ class MainWindow(QMainWindow):
                     name = f"button_{i}{j}"
                     button = self.get_button_by_name(name)
                     button.setIcon(self.icon_white)
+                    button.setIconSize(QSize(60,60))
                     # if j == 0 or j == 7:
                     #     self.board[i][j].isextreme = True
                 
@@ -262,6 +266,7 @@ class MainWindow(QMainWindow):
                     name = f"button_{i}{j}"
                     button = self.get_button_by_name(name)
                     button.setIcon(self.icon_black)
+                    button.setIconSize(QSize(60,60))
                     # if j == 0 or j == 7:
                     #     self.board[i][j].isextreme = True
             else:
@@ -272,6 +277,7 @@ class MainWindow(QMainWindow):
                     name = f"button_{i}{j}"
                     button = self.get_button_by_name(name)
                     button.setIcon(self.icon_black)
+                    button.setIconSize(QSize(60,60))
                     # if j == 0 or j == 7:
                     #     self.board[i][j].isextreme = True
         for button in self.all_buttons:
@@ -289,13 +295,13 @@ class MainWindow(QMainWindow):
     # Отображение возможных взятий  
     def make_red_dot(self, more_important_ways):
          for temp in more_important_ways:
-                i = temp[0]
-                j = temp[-1]
-                name_of_btn = f"button_{i}{j}"
-                btn = self.get_button_by_name(name_of_btn)
-                btn.setIcon(QIcon(resource_path(icon_of_red_dot)))
-                btn.setIconSize(QSize(10,10))
-                self.list_buttons.append(btn)
+            i = temp[0]
+            j = temp[-1]
+            name_of_btn = f"button_{i}{j}"
+            btn = self.get_button_by_name(name_of_btn)
+            btn.setIcon(QIcon(resource_path(icon_of_red_dot)))
+            btn.setIconSize(QSize(10,10))
+            self.list_buttons.append(btn)
 
     # Очистка всевозможных взятий
     def clear_red_dot(self):
@@ -622,7 +628,9 @@ class MainWindow(QMainWindow):
         parent_start_col = self.parent_c
         special_type = ("white" if self.type_of_figure == "black" else "black")
         for way in more_importan_ways:
-            stack.append([self.parent_r, self.parent_c, way[0], way[1]])
+            move = Move()
+            move.set_el(self.parent_r, self.parent_c, way[0], way[1])
+            stack.append(move)
         
         # print("\n first")
         # print(more_importan_ways)
@@ -633,16 +641,17 @@ class MainWindow(QMainWindow):
             # print(position)
             # print("\n new pos")
             # print(position)
+            parent_row = position.parent_row
+            parent_col = position.parent_col
+            row = position.row
+            col = position.col
             if position not in visited:
                 visited.append(position)
-                if [position[2], position[3]] not in result_arr:
-                    result_arr.append([position[2], position[3]])
+                if [row, col] not in result_arr:
+                    result_arr.append([row, col])
             else:
                 continue
-            parent_row = position[0]
-            parent_col = position[1]
-            row = position[2]
-            col = position[3]
+           
 
             parent_piece = self.board[parent_row][parent_col]
             current_piece = self.board[row][col]
@@ -697,13 +706,14 @@ class MainWindow(QMainWindow):
                 # print(new_more_important_ways)
 
             for way in new_more_important_ways:
-                new_position = [row, col, way[0], way[1]]
-                if new_position not in visited:
-                    stack.insert(0, new_position)
+                new_move = Move()
+                new_move.set_el(row, col, way[0], way[1])
+                if new_move not in visited:
+                    stack.insert(0, new_move)
        
         # print("\n take figure")
         # print(cut_figures)
-        self.print_board()
+        # self.print_board()
         for cut_pos in cut_figures:
             self.board[cut_pos[0]][cut_pos[1]].type_of_figure = special_type
 
@@ -1728,14 +1738,16 @@ class MainWindow(QMainWindow):
         self.ui.start_game_2_players.setEnabled(False)
         self.is_game_with_bot = False
         self.make_start_buttons_clicked_or_unclicked(False)
-        self.ui.label_time.setText("60c")
-        self.timer.timeout.connect(self.showTime)
         for button in self.all_buttons:
             button.setAttribute(Qt.WA_TransparentForMouseEvents, False)
+        self.ui.label_time.setText("60c")
+        self.timer.setInterval(1000)    
+        self.timer.start()
+        
         # self.settings_to_play_game_2_players()
         # self.ui.white_in_statistics_label.setStyleSheet(color_of_statistics_label_active)
         # self.ui.black_in_statistics_label.setStyleSheet(color_of_statistics_label_disactive)
-        self.timer.start()
+        
 
     def start_game_for_bot(self):
         self.start_game()
@@ -1792,6 +1804,7 @@ class MainWindow(QMainWindow):
         self.current_music="Без музыки"
         self.music_file = ""
         self.player.stop()
+        self.timer.stop()
         # self.start_settings_for_game()
 
     # def start_settings_for_game(self):
