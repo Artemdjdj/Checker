@@ -1,0 +1,6 @@
+__pycache__/
+main.ui
+resource_default.qrc
+resource.qrc
+restart_window.ui
+settings.ui
